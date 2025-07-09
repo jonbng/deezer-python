@@ -1,59 +1,5 @@
 # CHANGELOG
 
-## v7.1.1 (2024-12-20)
-
-### Documentation
-
-- Add tdambrin as a contributor for bug (#1232) ([`125ff85`](https://github.com/browniebroke/deezer-python/commit/125ff859c649a89a96045a4bc0661afde89fd88f))
-
-### Bug fixes
-
-- No forward parent when getting artist radio (#1211) ([`6807997`](https://github.com/browniebroke/deezer-python/commit/6807997aa8848a0aeffba23cdac70e11fcf0eef7))
-
-## v7.1.0 (2024-10-31)
-
-### Features
-
-- Drop support for python 3.8 (#1171) ([`ee076f0`](https://github.com/browniebroke/deezer-python/commit/ee076f020cf18506772603d3f9afef04e3d693a3))
-
-## v7.0.0 (2024-07-11)
-
-### Refactoring
-
-- Make query params more explicit ([`553df43`](https://github.com/browniebroke/deezer-python/commit/553df43847ecef875f85fb502a9e5b17eb24701d))
-- Remove unused app_id and app_secret client parameters (#1034) ([`c1bbf37`](https://github.com/browniebroke/deezer-python/commit/c1bbf37b3adf4783518fc72b8a12dd8cdf4435f3))
-
-### Features
-
-- Add custom auth class for httpx ([`e8d1955`](https://github.com/browniebroke/deezer-python/commit/e8d19552ee393d24c230f135db81b013482c7b5e))
-- Migrate from requests to httpx ([`06e20d8`](https://github.com/browniebroke/deezer-python/commit/06e20d826f7298680f36090f10f6af012732f5fc))
-
-### Testing
-
-- Separate client fixtures to avoid leaking auth to non-auth ([`81f11bf`](https://github.com/browniebroke/deezer-python/commit/81f11bf22a278f8fb0d60a4ef873c5dec82c691c))
-- Simplify mocked responses (#1039) ([`6df900f`](https://github.com/browniebroke/deezer-python/commit/6df900f281f316bd0ff6c0ac4f536c50352ccda0))
-
-### Documentation
-
-- Update language for python repl blocks ([`09b7c87`](https://github.com/browniebroke/deezer-python/commit/09b7c873389edcae81f3fc67f1ed6329eba36da6))
-- Update language for python repl blocks (#1033) ([`f66dec4`](https://github.com/browniebroke/deezer-python/commit/f66dec45918ff9d0f5e8ef54665e915abca122a0))
-
-## v6.1.1 (2023-10-18)
-
-### Bug fixes
-
-- Potential unset response attribute on httperror ([`82a47be`](https://github.com/browniebroke/deezer-python/commit/82a47be50f5609a80f0f48a53d01971f7dce362d))
-
-## v6.1.0 (2023-08-07)
-
-### Features
-
-- Add official support for python 3.12 (#791) ([`2eead31`](https://github.com/browniebroke/deezer-python/commit/2eead316d78128c85d365b664c2e3a926c65913a))
-
-### Documentation
-
-- Switch to furo theme (#766) ([`51cfb08`](https://github.com/browniebroke/deezer-python/commit/51cfb082c0df50a8726e1ae26ebfeca389e5d952))
-
 ## v6.0.0 (2023-06-27)
 
 ### Feature

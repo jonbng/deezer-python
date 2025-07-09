@@ -321,7 +321,7 @@ wheels = [
 
 [[package]]
 name = "deezer-python"
-version = "7.1.1"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
