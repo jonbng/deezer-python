@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
+import asyncio
+
 import httpx
 from httpx._types import HeaderTypes
 
@@ -28,7 +30,7 @@ from deezer.resources import (
 )
 
 
-class Client(httpx.Client):
+class Client(httpx.AsyncClient):
     """
     A client to retrieve some basic infos about Deezer resources.
 
@@ -82,6 +84,13 @@ class Client(httpx.Client):
             headers=headers,
         )
 
+    # Support synchronous context manager for backward compatibility
+    def __enter__(self):
+        return asyncio.run(self.__aenter__())
+
+    def __exit__(self, exc_type, exc, tb):
+        return asyncio.run(self.__aexit__(exc_type, exc, tb))
+
     def _process_json(
         self,
         item: dict[str, Any],
@@ -132,7 +141,7 @@ class Client(httpx.Client):
         assert object_class is not None  # noqa S101
         return object_class(self, result)
 
-    def request(
+    async def request(
         self,
         method: str,
         path: str,
@@ -152,7 +161,7 @@ class Client(httpx.Client):
         :param resource_id: The resource id to use as top level.
         :param paginate_list: Whether to wrap list into a pagination object.
         """
-        response = super().request(
+        response = await super().request(
             method,
             path,
             **kwargs,
@@ -177,23 +186,23 @@ class Client(httpx.Client):
     def _get_paginated_list(self, path: str, params: dict | None = None):
         return PaginatedList(client=self, base_path=path, params=params)
 
-    def get_album(self, album_id: int) -> Album:
+    async def get_album(self, album_id: int) -> Album:
         """
         Get the album with the given ID.
 
         :returns: an :class:`~deezer.Album` object
         """
-        return self.request("GET", f"album/{album_id}")
+        return await self.request("GET", f"album/{album_id}")
 
-    def get_artist(self, artist_id: int) -> Artist:
+    async def get_artist(self, artist_id: int) -> Artist:
         """
         Get the artist with the given ID.
 
         :returns: an :class:`~deezer.Artist` object
         """
-        return self.request("GET", f"artist/{artist_id}")
+        return await self.request("GET", f"artist/{artist_id}")
 
-    def get_chart(self, genre_id: int = 0) -> Chart:
+    async def get_chart(self, genre_id: int = 0) -> Chart:
         """
         Get overall charts for tracks, albums, artists and playlists for the given genre ID.
 
@@ -202,60 +211,60 @@ class Client(httpx.Client):
         :param genre_id: the genre ID, default to `All` genre (genre_id = 0).
         :returns: a :class:`~deezer.Chart` instance.
         """
-        return self.request("GET", f"chart/{genre_id}", resource_type=Chart, resource_id=genre_id)
+        return await self.request("GET", f"chart/{genre_id}", resource_type=Chart, resource_id=genre_id)
 
-    def get_tracks_chart(self, genre_id: int = 0) -> list[Track]:
+    async def get_tracks_chart(self, genre_id: int = 0) -> list[Track]:
         """
         Get top tracks for the given genre ID.
 
         :param genre_id: the genre ID, default to `All` genre (genre_id = 0).
         :return: a list of :class:`~deezer.Track` instances.
         """
-        return self.request("GET", f"chart/{genre_id}/tracks")
+        return await self.request("GET", f"chart/{genre_id}/tracks")
 
-    def get_albums_chart(self, genre_id: int = 0) -> list[Album]:
+    async def get_albums_chart(self, genre_id: int = 0) -> list[Album]:
         """
         Get top albums for the given genre ID.
 
         :param genre_id: the genre ID, default to `All` genre (genre_id = 0).
         :return: a list of :class:`~deezer.Album` instances.
         """
-        return self.request("GET", f"chart/{genre_id}/albums")
+        return await self.request("GET", f"chart/{genre_id}/albums")
 
-    def get_artists_chart(self, genre_id: int = 0) -> list[Artist]:
+    async def get_artists_chart(self, genre_id: int = 0) -> list[Artist]:
         """
         Get top artists for the given genre ID.
 
         :param genre_id: the genre ID, default to `All` genre (genre_id = 0).
         :return: a list of :class:`~deezer.Artist` instances.
         """
-        return self.request("GET", f"chart/{genre_id}/artists")
+        return await self.request("GET", f"chart/{genre_id}/artists")
 
-    def get_playlists_chart(self, genre_id: int = 0) -> list[Playlist]:
+    async def get_playlists_chart(self, genre_id: int = 0) -> list[Playlist]:
         """
         Get top playlists for the given genre ID.
 
         :param genre_id: the genre ID, default to `All` genre (genre_id = 0).
         :return: a list of :class:`~deezer.Playlist` instances.
         """
-        return self.request("GET", f"chart/{genre_id}/playlists")
+        return await self.request("GET", f"chart/{genre_id}/playlists")
 
-    def get_podcasts_chart(self, genre_id: int = 0) -> list[Podcast]:
+    async def get_podcasts_chart(self, genre_id: int = 0) -> list[Podcast]:
         """
         Get top podcasts for the given genre ID.
 
         :param genre_id: the genre ID, default to `All` genre (genre_id = 0).
         :return: a list of :class:`~deezer.Podcast` instances.
         """
-        return self.request("GET", f"chart/{genre_id}/podcasts")
+        return await self.request("GET", f"chart/{genre_id}/podcasts")
 
-    def get_editorial(self, editorial_id: int) -> Editorial:
+    async def get_editorial(self, editorial_id: int) -> Editorial:
         """
         Get the editorial with the given ID.
 
         :returns: a :class:`~deezer.Editorial` object.
         """
-        return self.request("GET", f"editorial/{editorial_id}")
+        return await self.request("GET", f"editorial/{editorial_id}")
 
     def list_editorials(self) -> PaginatedList[Editorial]:
         """
@@ -266,63 +275,63 @@ class Client(httpx.Client):
         """
         return self._get_paginated_list("editorial")
 
-    def get_episode(self, episode_id: int) -> Episode:
+    async def get_episode(self, episode_id: int) -> Episode:
         """
         Get the episode with the given ID.
 
         :returns: a :class:`~deezer.Episode` object
         """
-        return self.request("GET", f"episode/{episode_id}")
+        return await self.request("GET", f"episode/{episode_id}")
 
-    def get_genre(self, genre_id: int) -> Genre:
+    async def get_genre(self, genre_id: int) -> Genre:
         """
         Get the genre with the given ID.
 
         :returns: a :class:`~deezer.Genre` object
         """
-        return self.request("GET", f"genre/{genre_id}")
+        return await self.request("GET", f"genre/{genre_id}")
 
-    def list_genres(self) -> list[Genre]:
+    async def list_genres(self) -> list[Genre]:
         """
         List musical genres.
 
         :return: a list of :class:`~deezer.Genre` instances
         """
-        return self.request("GET", "genre")
+        return await self.request("GET", "genre")
 
-    def get_playlist(self, playlist_id: int) -> Playlist:
+    async def get_playlist(self, playlist_id: int) -> Playlist:
         """
         Get the playlist with the given ID.
 
         :returns: a :class:`~deezer.Playlist` object
         """
-        return self.request("GET", f"playlist/{playlist_id}")
+        return await self.request("GET", f"playlist/{playlist_id}")
 
-    def get_podcast(self, podcast_id: int) -> Podcast:
+    async def get_podcast(self, podcast_id: int) -> Podcast:
         """
         Get the podcast with the given ID.
 
         :returns: a :class:`~deezer.Podcast` object
         """
-        return self.request("GET", f"podcast/{podcast_id}")
+        return await self.request("GET", f"podcast/{podcast_id}")
 
-    def get_radio(self, radio_id: int) -> Radio:
+    async def get_radio(self, radio_id: int) -> Radio:
         """
         Get the radio with the given ID.
 
         :returns: a :class:`~deezer.Radio` object
         """
-        return self.request("GET", f"radio/{radio_id}")
+        return await self.request("GET", f"radio/{radio_id}")
 
-    def list_radios(self) -> list[Radio]:
+    async def list_radios(self) -> list[Radio]:
         """
         List radios.
 
         :return: a list of :class:`~deezer.Radio` instances
         """
-        return self.request("GET", "radio")
+        return await self.request("GET", "radio")
 
-    def get_radios_top(self) -> PaginatedList[Radio]:
+    async def get_radios_top(self) -> PaginatedList[Radio]:
         """
         Get the top radios.
 
@@ -331,22 +340,22 @@ class Client(httpx.Client):
         """
         return self._get_paginated_list("radio/top")
 
-    def get_track(self, track_id: int) -> Track:
+    async def get_track(self, track_id: int) -> Track:
         """
         Get the track with the given ID.
 
         :returns: a :class:`~deezer.Track` object
         """
-        return self.request("GET", f"track/{track_id}")
+        return await self.request("GET", f"track/{track_id}")
 
-    def get_user(self, user_id: int | None = None) -> User:
+    async def get_user(self, user_id: int | None = None) -> User:
         """
         Get the user with the given ID.
 
         :returns: a :class:`~deezer.User` object
         """
         user_id_str = str(user_id) if user_id else "me"
-        return self.request("GET", f"user/{user_id_str}")
+        return await self.request("GET", f"user/{user_id_str}")
 
     def get_user_recommended_tracks(self, **kwargs) -> PaginatedList[Track]:
         """
@@ -404,23 +413,23 @@ class Client(httpx.Client):
         user_id_str = str(user_id) if user_id else "me"
         return self._get_paginated_list(f"user/{user_id_str}/albums")
 
-    def add_user_album(self, album_id: int) -> bool:
+    async def add_user_album(self, album_id: int) -> bool:
         """
         Add an album to the user's library.
 
         :param album_id: the ID of the album to add.
         :return: boolean whether the operation succeeded.
         """
-        return self.request("POST", "user/me/albums", params={"album_id": album_id})
+        return await self.request("POST", "user/me/albums", params={"album_id": album_id})
 
-    def remove_user_album(self, album_id: int) -> bool:
+    async def remove_user_album(self, album_id: int) -> bool:
         """
         Remove an album from the user's library.
 
         :param album_id: the ID of the album to remove.
         :return: boolean whether the operation succeeded.
         """
-        return self.request("DELETE", "user/me/albums", params={"album_id": album_id})
+        return await self.request("DELETE", "user/me/albums", params={"album_id": album_id})
 
     def get_user_artists(self, user_id: int | None = None) -> PaginatedList[Artist]:
         """
@@ -433,23 +442,23 @@ class Client(httpx.Client):
         user_id_str = str(user_id) if user_id else "me"
         return self._get_paginated_list(f"user/{user_id_str}/artists")
 
-    def add_user_artist(self, artist_id: int) -> bool:
+    async def add_user_artist(self, artist_id: int) -> bool:
         """
         Add an artist to the user's library.
 
         :param artist_id: the ID of the artist to add.
         :return: boolean whether the operation succeeded.
         """
-        return self.request("POST", "user/me/artists", params={"artist_id": artist_id})
+        return await self.request("POST", "user/me/artists", params={"artist_id": artist_id})
 
-    def remove_user_artist(self, artist_id: int) -> bool:
+    async def remove_user_artist(self, artist_id: int) -> bool:
         """
         Remove an artist from the user's library.
 
         :param artist_id: the ID of the artist to remove.
         :return: boolean whether the operation succeeded.
         """
-        return self.request(
+        return await self.request(
             "DELETE",
             "user/me/artists",
             params={"artist_id": artist_id},
@@ -477,23 +486,23 @@ class Client(httpx.Client):
         user_id_str = str(user_id) if user_id else "me"
         return self._get_paginated_list(f"user/{user_id_str}/followings")
 
-    def add_user_following(self, user_id: int) -> bool:
+    async def add_user_following(self, user_id: int) -> bool:
         """
         Follow the given user ID as the currently authenticated user.
 
         :param user_id: the ID of the user to follow.
         :return: boolean whether the operation succeeded.
         """
-        return self.request("POST", "user/me/followings", params={"user_id": user_id})
+        return await self.request("POST", "user/me/followings", params={"user_id": user_id})
 
-    def remove_user_following(self, user_id: int) -> bool:
+    async def remove_user_following(self, user_id: int) -> bool:
         """
         Stop following the given user ID as the currently authenticated user.
 
         :param user_id: the ID of the user to stop following.
         :return: boolean whether the operation succeeded.
         """
-        return self.request("DELETE", "user/me/followings", params={"user_id": user_id})
+        return await self.request("DELETE", "user/me/followings", params={"user_id": user_id})
 
     def get_user_history(self) -> PaginatedList[Track]:
         """
@@ -515,62 +524,62 @@ class Client(httpx.Client):
         user_id_str = str(user_id) if user_id else "me"
         return self._get_paginated_list(f"user/{user_id_str}/tracks")
 
-    def add_user_track(self, track_id: int) -> bool:
+    async def add_user_track(self, track_id: int) -> bool:
         """
         Add a track to the user's library.
 
         :param track_id: the ID of the track to add.
         :return: boolean whether the operation succeeded.
         """
-        return self.request("POST", "user/me/tracks", params={"track_id": track_id})
+        return await self.request("POST", "user/me/tracks", params={"track_id": track_id})
 
-    def remove_user_track(self, track_id: int) -> bool:
+    async def remove_user_track(self, track_id: int) -> bool:
         """
         Remove a track from the user's library.
 
         :param track_id: the ID of the track to remove.
         :return: boolean whether the operation succeeded.
         """
-        return self.request("DELETE", "user/me/tracks", params={"track_id": track_id})
+        return await self.request("DELETE", "user/me/tracks", params={"track_id": track_id})
 
-    def remove_user_playlist(self, playlist_id: int) -> bool:
+    async def remove_user_playlist(self, playlist_id: int) -> bool:
         """
         Remove a playlist from the user's library.
 
         :param playlist_id: the ID of the playlist to remove.
         :return: boolean whether the operation succeeded.
         """
-        return self.request("DELETE", "user/me/playlists", params={"playlist_id": playlist_id})
+        return await self.request("DELETE", "user/me/playlists", params={"playlist_id": playlist_id})
 
-    def add_user_playlist(self, playlist_id: int) -> bool:
+    async def add_user_playlist(self, playlist_id: int) -> bool:
         """
         Add a playlist to the user's library.
 
         :param playlist_id: the ID of the playlist to add.
         :return: boolean whether the operation succeeded.
         """
-        return self.request("POST", "user/me/playlists", params={"playlist_id": playlist_id})
+        return await self.request("POST", "user/me/playlists", params={"playlist_id": playlist_id})
 
-    def create_playlist(self, playlist_name) -> int:
+    async def create_playlist(self, playlist_name) -> int:
         """
         Create a playlist on the user's account.
 
         :param playlist_name: the name of the playlist.
         :return: the ID of the playlist that was created
         """
-        result = self.request("POST", "user/me/playlists", params={"title": playlist_name})
+        result = await self.request("POST", "user/me/playlists", params={"title": playlist_name})
         # Note: the REST API call returns a dict with just the "id" key in it,
         # so we return that instead of the full Playlist object
         return result.id
 
-    def delete_playlist(self, playlist_id) -> bool:
+    async def delete_playlist(self, playlist_id) -> bool:
         """
         Delete a playlist from the user's account.
 
         :param playlist_id: the ID of the playlist to remove.
         :return: boolean whether the operation succeeded.
         """
-        return self.request("DELETE", f"playlist/{playlist_id}")
+        return await self.request("DELETE", f"playlist/{playlist_id}")
 
     def _search(
         self,

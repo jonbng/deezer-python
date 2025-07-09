@@ -5,6 +5,8 @@ from typing import Any
 
 from ..pagination import PaginatedList
 
+import asyncio
+
 NOT_INFERRED = object()
 
 
@@ -56,7 +58,7 @@ class Resource:
             result[key] = value
         return result
 
-    def get_relation(
+    async def get_relation(
         self,
         relation: str,
         resource_type: type[Resource] | None = None,  # type: ignore[valid-type]
@@ -71,7 +73,7 @@ class Resource:
         is not meant to be used directly by a client, it's more
         a helper method for the child objects.
         """
-        return self.client.request(
+        return await self.client.request(
             "GET",
             f"{self.type}/{self.id}/{relation}",
             parent=self if fwd_parent else None,
@@ -79,27 +81,27 @@ class Resource:
             params=params,
         )
 
-    def post_relation(self, relation: str, params: dict):
+    async def post_relation(self, relation: str, params: dict):
         """
         Generic method to make a POST request to a relation from any resource.
 
         This is not meant to be used directly by a client, it's more
         a helper method for the child objects.
         """
-        return self.client.request(
+        return await self.client.request(
             "POST",
             f"{self.type}/{self.id}/{relation}",
             params=params,
         )
 
-    def delete_relation(self, relation: str, params: dict | None = None):
+    async def delete_relation(self, relation: str, params: dict | None = None):
         """
         Generic method to make a DELETE request to a relation from any resource.
 
         This is not meant to be used directly by a client, it's more
         a helper method for the child objects.
         """
-        return self.client.request(
+        return await self.client.request(
             "DELETE",
             f"{self.type}/{self.id}/{relation}",
             params=params,
@@ -133,7 +135,7 @@ class Resource:
                 self._fields += (item,)
                 return result
             elif not getattr(self, "_fetched", False):
-                full_resource = self.get()
+                full_resource = asyncio.run(self.get())
                 missing_fields = set(full_resource._fields) - set(self._fields)
                 for field_name in missing_fields:
                     setattr(self, field_name, getattr(full_resource, field_name))
@@ -149,7 +151,7 @@ class Resource:
         """
         return NOT_INFERRED
 
-    def get(self):
+    async def get(self):
         """Get the resource from the API."""
         self._fetched = True
-        return self.client.request("GET", f"{self.type}/{self.id}")
+        return await self.client.request("GET", f"{self.type}/{self.id}")

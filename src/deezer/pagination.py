@@ -4,6 +4,8 @@ from collections.abc import Generator
 from typing import Generic, TypeVar, overload
 from urllib.parse import parse_qs, urlparse
 
+import asyncio
+
 import deezer
 
 ResourceType = TypeVar("ResourceType")
@@ -86,12 +88,14 @@ class PaginatedList(Generic[ResourceType]):
 
     def _fetch_next_page(self) -> list[ResourceType]:
         assert self.__next_path is not None  # noqa S101
-        response_payload = self.__client.request(
-            "GET",
-            self.__next_path,
-            parent=self.__parent,
-            paginate_list=True,
-            params=self.__next_params,
+        response_payload = asyncio.run(
+            self.__client.request(
+                "GET",
+                self.__next_path,
+                parent=self.__parent,
+                paginate_list=True,
+                params=self.__next_params,
+            )
         )
         self.__next_path = None
         self.__total = response_payload.get("total")
@@ -112,12 +116,14 @@ class PaginatedList(Generic[ResourceType]):
         if self.__total is None:
             params = self.__base_params.copy()
             params["limit"] = 1
-            response_payload = self.__client.request(
-                "GET",
-                self.__base_path,
-                parent=self.__parent,
-                paginate_list=True,
-                params=params,
+            response_payload = asyncio.run(
+                self.__client.request(
+                    "GET",
+                    self.__base_path,
+                    parent=self.__parent,
+                    paginate_list=True,
+                    params=params,
+                )
             )
             self.__total = response_payload["total"]
         assert self.__total is not None  # noqa S101

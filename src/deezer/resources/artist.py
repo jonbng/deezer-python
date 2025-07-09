@@ -51,14 +51,14 @@ class Artist(Resource):
         """
         return self.get_paginated_list("related", **kwargs)
 
-    def get_radio(self, **kwargs) -> list[Track]:
+    async def get_radio(self, **kwargs) -> list[Track]:
         """
         Get a list of tracks.
 
         :returns: list of :class:`Track <deezer.Track>` instances
         """
         # radio returns tracks from different artists -> no fwd parent
-        return self.get_relation("radio", fwd_parent=False, **kwargs)
+        return await self.get_relation("radio", fwd_parent=False, **kwargs)
 
     def get_albums(self, **kwargs) -> PaginatedList[Album]:
         """
