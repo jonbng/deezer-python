@@ -1,11 +1,23 @@
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 from typing import Any
 
 from ..pagination import PaginatedList
 
 NOT_INFERRED = object()
+
+
+class _FieldAwaiter:
+    """Awaitable helper used when fetching missing fields asynchronously."""
+
+    def __init__(self, resource: Resource, field: str) -> None:
+        self.resource = resource
+        self.field = field
+
+    def __await__(self):  # type: ignore[override]
+        return self.resource._get_missing_field_async(self.field).__await__()
 
 
 class Resource:
@@ -133,12 +145,12 @@ class Resource:
                 self._fields += (item,)
                 return result
             elif not getattr(self, "_fetched", False):
-                full_resource = self.get()
-                missing_fields = set(full_resource._fields) - set(self._fields)
-                for field_name in missing_fields:
-                    setattr(self, field_name, getattr(full_resource, field_name))
-                    self._fields += (field_name,)
-                return getattr(self, item)
+                try:
+                    asyncio.get_running_loop()
+                except RuntimeError:
+                    return asyncio.run(self._get_missing_field_async(item))
+                else:
+                    return _FieldAwaiter(self, item)
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
 
     def _infer_missing_field(self, item: str) -> Any:
@@ -153,3 +165,15 @@ class Resource:
         """Get the resource from the API."""
         self._fetched = True
         return self.client.request("GET", f"{self.type}/{self.id}")
+
+    async def get_async(self):
+        """Asynchronous version of :meth:`get`."""
+        return await asyncio.to_thread(self.get)
+
+    async def _get_missing_field_async(self, item: str) -> Any:
+        full_resource = await self.get_async()
+        missing_fields = set(full_resource._fields) - set(self._fields)
+        for field_name in missing_fields:
+            setattr(self, field_name, getattr(full_resource, field_name))
+            self._fields += (field_name,)
+        return getattr(self, item)
