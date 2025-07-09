@@ -9,23 +9,23 @@ For endpoints returning a paginated response, the list of items are wrapped in a
 The class is an iterator, meaning that you can go through instances in the list with a for loop, or by calling `next()` to get the following item:
 
 ```python
-artist_albums = artist.get_albums()
+artist_albums = await artist.get_albums()
 
 # Iterable style
-for album in artist_albums:
+async for album in artist_albums:
     print(album.title)
 
 # Iterator
-album_1 = next(artist_albums)
-album_2 = next(artist_albums)
-album_3 = next(artist_albums)
+album_1 = await anext(artist_albums)
+album_2 = await anext(artist_albums)
+album_3 = await anext(artist_albums)
 ```
 
 This will take care or fetching extra pages if needed. Once all the elements have been fetched, no further network calls will happen. This will work if you iterate over the same paginated response again:
 
 ```python
 # No API calls: artist_albums is reused from above
-for album in artist_albums:
+async for album in artist_albums:
     print(album.title)
 ```
 
@@ -33,7 +33,7 @@ However, API calls would be repeated if you get a fresh paginated response again
 
 ```python
 # New API calls: artist.get_albums() returns a fresh paginated list
-for album in artist.get_albums():
+async for album in await artist.get_albums():
     print(album.title)
 ```
 

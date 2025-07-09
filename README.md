@@ -59,9 +59,27 @@ Easily query the Deezer API from you Python code. The data returned by the Deeze
 API is mapped to python resources:
 
 ```pycon
->>> client = deezer.Client()
->>> client.get_album(680407).title
+>>> async with deezer.Client() as client:
+...     album = await client.get_album(680407)
+...     album.title
 'Monkey Business'
+```
+
+### Running asynchronous code
+
+You can execute asynchronous snippets using the event loop of your choice. Here
+is how to run the above example with ``asyncio``:
+
+```python
+import asyncio
+import deezer
+
+async def main():
+    async with deezer.Client() as client:
+        album = await client.get_album(680407)
+        print(album.title)
+
+asyncio.run(main())
 ```
 
 Ready for more? Look at our whole [documentation](http://deezer-python.readthedocs.io/)
