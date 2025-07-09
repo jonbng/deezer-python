@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Generator
+import asyncio
+from collections.abc import AsyncGenerator, Generator
 from typing import Generic, TypeVar, overload
 from urllib.parse import parse_qs, urlparse
 
@@ -32,6 +33,7 @@ class PaginatedList(Generic[ResourceType]):
         self.__parent = parent
         self.__total = None
         self.__iter = iter(self)
+        self.__aiter = self._async_iter()
 
     def __repr__(self) -> str:
         """Convenient representation giving a preview of the content."""
@@ -68,6 +70,22 @@ class PaginatedList(Generic[ResourceType]):
         while self._could_grow():
             yield from self._grow()
 
+    def __aiter__(self) -> AsyncGenerator[ResourceType, None]:
+        """Asynchronously iterate over the items, fetching new pages as needed."""
+        self.__aiter = self._async_iter()
+        return self
+
+    async def __anext__(self) -> ResourceType:
+        """Return the next item from the asynchronous iterator."""
+        return await self.__aiter.__anext__()
+
+    async def _async_iter(self) -> AsyncGenerator[ResourceType, None]:
+        for element in self.__elements:
+            yield element
+        while self._could_grow():
+            for element in await self._grow_async():
+                yield element
+
     def __next__(self) -> ResourceType:
         """Get the next item from the list."""
         return next(self.__iter)
@@ -80,13 +98,18 @@ class PaginatedList(Generic[ResourceType]):
         return self.__next_path is not None
 
     def _grow(self) -> list[ResourceType]:
-        new_elements = self._fetch_next_page()
+        new_elements = asyncio.run(self._fetch_next_page())
         self.__elements.extend(new_elements)
         return new_elements
 
-    def _fetch_next_page(self) -> list[ResourceType]:
+    async def _grow_async(self) -> list[ResourceType]:
+        new_elements = await self._fetch_next_page()
+        self.__elements.extend(new_elements)
+        return new_elements
+
+    async def _fetch_next_page(self) -> list[ResourceType]:
         assert self.__next_path is not None  # noqa S101
-        response_payload = self.__client.request(
+        response_payload = await self.__client.request(
             "GET",
             self.__next_path,
             parent=self.__parent,
@@ -106,13 +129,12 @@ class PaginatedList(Generic[ResourceType]):
         while len(self.__elements) <= index and self._could_grow():
             self._grow()
 
-    @property
-    def total(self) -> int:
-        """The total number of items in the list, mirroring what Deezer returns."""
+    async def get_total(self) -> int:
+        """Asynchronously fetch the total number of items."""
         if self.__total is None:
             params = self.__base_params.copy()
             params["limit"] = 1
-            response_payload = self.__client.request(
+            response_payload = await self.__client.request(
                 "GET",
                 self.__base_path,
                 parent=self.__parent,
@@ -122,3 +144,8 @@ class PaginatedList(Generic[ResourceType]):
             self.__total = response_payload["total"]
         assert self.__total is not None  # noqa S101
         return self.__total
+
+    @property
+    def total(self) -> int:
+        """Total number of items, for synchronous code."""
+        return asyncio.run(self.get_total())
